@@ -1,7 +1,7 @@
 import random
 
 '''
-これからも制作を続けて、フロントエンドの実装、UI UXの向上、デプロイを経てまともに遊べる形にしていきたい!!!
+これからも制作を続けて、分けれる部分でのコンポーネント化、フロントエンドの実装、UI UXの向上、デプロイを経てまともに遊べる形にしていきたいです
 '''
 
 # Cardクラス
@@ -75,7 +75,7 @@ class BlackJack(Card):
             return True
     #倍率
     def bairitu(self,obj):
-        if len(obj.hand) == 2 and obj.hand_sum:
+        if len(obj.hand) == 2 and obj.hand_sum == 21:
             return 2.5
         else:
             return 2
@@ -94,10 +94,11 @@ class Player:
         self.chip = 100
         self.bet = 0
 
+#カードの追加判定
     def player_action(self,num):
-        if num == 0:
+        if num == '':
             return False
-        elif num == 1:
+        elif num == '1':
             return True
         else:
             return 'error'
@@ -134,14 +135,6 @@ for player in players_name: #プレイヤーの辞書作成
     player_dic[player].hand = [blackjack.draw() for _ in range(2)]
     player_dic[player].hand_sum = blackjack.sum(player_dic[player].hand)
 
-print(player_dic[player].hand for player in players_name)
-
-
-print('初期ハンドが配られました')
-for player in players_name:
-    print(f'{player}さんの初期ハンドは、{"と".join(player_dic[player].hand)}です 合計値は{player_dic[player].hand_sum}')
-
-
 print('======Betのターン======')
 print()
 for player in players_name:
@@ -151,44 +144,59 @@ for player in players_name:
     bet_action = False
     while bet_action == False:
         print(f'{player}さんのターン..')
+        print(f'持ちチップは、{player_dic[player].chip}です。')
         bet_num = int(input('ベット額を入力してください（数字を入力してください) →  '))
         bet_action = blackjack.player_bet(player_dic[player],bet_num)
         if bet_action:
             player_dic[player].bet = bet_num
             player_dic[player].chip -= bet_num
             print(f'{player}さんは、{player_dic[player].bet}チップをベットしました')
+            print(f'{player}さんの残りチップは、{player_dic[player].chip}')
         else:
-            print('無効な入力です、もう一度ベット額を入力ください')
+            print('//無効な入力です、もう一度ベット額を入力ください')
+
+print('======Playerのターン======')
+
+print('初期ハンドが配られました')
+for player in players_name:
+    print(f'{player}さんの初期ハンドは、{"と".join(player_dic[player].hand)}です 合計値 : {player_dic[player].hand_sum}')
+    print()
+
 
 dealer = Dealer()
 dealer.hand = [blackjack.draw() for _ in range(2)]
 dealer.hand_sum = blackjack.sum(dealer.hand)
 print(f'ディーラーの初期ハンドは、{dealer.hand[0]} と ？ です')
-
-print('======Playerのターン======')
-
-
+print()
 
 print('= HIT、STANDの選択アクションの開始 =')
 
 for player in players_name:
-    print(f'{player}のターン..')
+    a = input(f'{player}さんのターンです。 :エンターキー(E)で続行')
     draw_action = True
     while player_dic[player].hand_sum < 22 and draw_action:
-        print(f'{player}さんのハンドの現合計は、 {player_dic[player].hand_sum} だよ！')
-        action_num = int(input(f'({player}さん)アクションの選択（数字を入力してください）, 0:STAND 1:HIT →  '))
+        print(f'{player}さんの現ハンドは、{"、".join(player_dic[player].hand)}で、')
+        print(f'現合計は、 {player_dic[player].hand_sum} です')
+        #int(input(f'({player}さん)アクションの選択（数字を入力してください）, 0:STAND 1:HIT →  '))
+        action_num = input(f'({player}さん)アクションの選択 → STAND : ENTERキーを押す ,HIT : 1 を入力')
         draw_action = player_dic[player].player_action(action_num)
         if draw_action == 'error':
             print('無効な入力です//')
-            print(' 0 か 1 で入力してください//')
+            print('ENTERキーか、1 で入力してください//')
             draw_action = True
         elif draw_action:
             add_card = blackjack.draw()
             player_dic[player].hand.append(add_card)
             player_dic[player].hand_sum = blackjack.sum(player_dic[player].hand)
             print(f'引いたのは、 {add_card} だよ！')
-    print(f'{player}さんの最終ハンドは、{player_dic[player].hand_sum} です！')
-
+        if player_dic[player].hand_sum > 21:
+            if player_dic[player].chip > 0:
+                print(f'{player}さんはバーストし、{player_dic[player].bet}チップを失いました..')
+                print(f'{player}さんの持ちチップは、{player_dic[player].chip}です')
+            else:
+                print(f'{player}さんは、チップが尽きてしまったので退場となります..')
+    if player_dic[player].hand_sum <22:
+        print(f'{player}さんの最終ハンドは、{player_dic[player].hand_sum} です！')
 
 
 print('======Dealerのターン======')
@@ -204,12 +212,12 @@ if len(blackjack.not_bust_players) > 0:
     print("さんと".join(blackjack.not_bust_players) + 'さんがディーラーとの勝負です..')
 
     while True:
-        print(f'現在のディーラーの合計値は、{dealer.hand_sum} です!')
+        print(f'現在のディーラーの合計値は、{dealer.hand_sum} です')
         a = input()
         if dealer.action():
             break
         aa = blackjack.draw()
-        print(f'ディーラーに配られたのは、{aa} です！')
+        print(f'ディーラーに配られたのは、{aa} です')
         dealer.hand.append(aa)
         dealer.hand_sum = blackjack.sum(dealer.hand)
 
@@ -217,20 +225,36 @@ print(f'ディーラーの最終合計は、{dealer.hand_sum} です！')
 
 a = input()#ここまで
 print('======Judge======')
-print('ジャッジの結果 ...')
+print('ジャッジします...')
+print()
 
 for player in blackjack.not_bust_players:
     print(f'{player}の結果は..')
     judge_result = blackjack.judge(player_dic[player].hand_sum,dealer.hand_sum)
-    print(f'{player}の、{judge_result} です！')
+    print(f'{player}さんの、{judge_result} です！')
     if judge_result == 'Win':
-        print(f'{player}は、{int(player_dic[player].bet * blackjack.bairitu(player_dic[player]))}を獲得！')
+        print(f'{player}さんの勝ちです！')
+        print(f'{int(player_dic[player].bet * blackjack.bairitu(player_dic[player]))}チップを獲得！')
         player_dic[player].chip += int(player_dic[player].bet * blackjack.bairitu(player_dic[player]))
     elif judge_result == 'Draw':
-        print(f'{player}は、引き分け！')
+        print(f'{player}さんは、引き分け！')
+        print(f'ベットした{player_dic[player].bet}チップが戻されます')
         player_dic[player].chip += player_dic[player].bet
     else:
-        print(f'{player}は、負けです..')
-        print(f'{player_dic[player].bet}を失いました...')
-    
-    print(f'{player}の、現在のチップは、{player_dic[player].chip}です')
+        print(f'{player}さんは、の負けです..')
+        print(f'{player_dic[player].bet}を失いました..')
+    if player_dic[player].chip <= 0:
+        print(f'{player}さんは、チップが尽きてしまったので退場となります..')
+    else:
+        print(f'{player}さんの持ちチップは、{player_dic[player].chip}です')
+    if player != blackjack.not_bust_players[-1]:
+        a = input('エンターキー(E)で続行')
+
+for player in players_name:
+    if player_dic[player].chip <= 0:
+        players_name.remove(player)
+    else:
+        a = input(f'{player}さんは、ゲームを続行を希望しますか？ する場合 :エンターキーを押す , しない場合 : 1 を入力で終了')
+        ans = blackjack.player_action(a)
+        if ans:
+            players_name.remove(player)
